@@ -9,13 +9,31 @@
 -module(network_algo).
 -author("david").
 
+-define(AVERAGE_SAMPLES,1000).
+-define(PERCENTAGE_EDGES_ADD,15).
+-define(PERCENTAGE_VERTICES_REMOVE,10).
+
 
 
 %% API
--export([test/0,generate_cubiq_mesh/1,list_of_edges_representation/1,generate_csv/1,generate_random_3D_indexes/2]).
--export([remove_vertices_by_percentage/3,generate_random_pairs/3,add_random_edges_by_percentage/3]).
+-export([test/1,generate_cubiq_mesh/1,list_of_edges_representation/1,generate_csv/1,generate_random_3D_indexes/2]).
+-export([remove_vertices_by_percentage/3,generate_random_pairs/3,add_random_edges_by_percentage/3,calculate_average_shortest_path/3]).
 
-test()->G = generate_cubiq_mesh(10),generate_random_pairs(G,10,10),list_of_edges_representation(G).
+test(MeshSize)-> G = generate_cubiq_mesh(MeshSize),
+  io:format("Graph # of Vertices: ~p\n",[length(digraph:vertices(G))]),
+  io:format("Graph # of Edges: ~p\n",[trunc(length(digraph:edges(G))/2)]),
+  io:format("Graph Avg Distances Over 1000 Pairs: ~p\n",[calculate_average_shortest_path(G,MeshSize,?AVERAGE_SAMPLES)]),
+  io:format("\nResults after adding 10% of the edges\n"),
+  add_random_edges_by_percentage(G,MeshSize,?PERCENTAGE_EDGES_ADD),
+  io:format("Graph # of Edges: ~p\n",[length(digraph:edges(G))]),
+  io:format("Graph Avg Distances Over 1000 Pairs: ~p\n",[calculate_average_shortest_path(G,MeshSize,?AVERAGE_SAMPLES)]),
+  remove_vertices_by_percentage(G,MeshSize,?PERCENTAGE_VERTICES_REMOVE),
+  io:format("\nResults after removing 10% of the vertices\n"),
+  io:format("Graph # of Vertices: ~p\n",[length(digraph:vertices(G))]),
+  io:format("Graph # of Edges: ~p\n",[trunc(length(digraph:edges(G))/2)]),
+  io:format("Graph Avg Distances Over 1000 Pairs: ~p\n",[calculate_average_shortest_path(G,MeshSize,?AVERAGE_SAMPLES)]),
+  io:format("Generating graph csv file"),generate_csv(G),io:format(" done~n").
+
 
 generate_cubiq_mesh(N)-> Graph = digraph:new(),NewGraph = generate_vertices(Graph,N),connect_mesh_edges(Graph,N,digraph:vertices(NewGraph)).
 
@@ -86,3 +104,17 @@ add_edges_given_vertices_pairslist(Graph,VerticesPairsList) -> [H | T] = Vertice
                                                               digraph:add_edge(Graph,element(1,H),element(2,H)), %V1->V2
                                                               digraph:add_edge(Graph,element(2,H),element(1,H)), %V2->V1
                                                               add_edges_given_vertices_pairslist(Graph,T).
+
+calculate_average_shortest_path(Graph,MaxN,Instances)->ListOfPairs = generate_random_pairs(Graph,MaxN,Instances),
+                                                       {Acc,N} = distance_acc(Graph,ListOfPairs,0,length(ListOfPairs)),
+                                                        Acc/N.
+
+distance_acc(_,[],AccDist,Instances)-> {AccDist,Instances};%returns the total accumulated distance and the number of instances to calculate average
+distance_acc(Graph,ListOfPairs,AccDist,Instances)-> [H | T] = ListOfPairs, V1 = element(1,H), V2 = element(2,H),
+                                                    CurrDist = digraph:get_short_path(Graph,V1,V2),
+                                                    if
+                                                      CurrDist == false -> distance_acc(Graph,T,AccDist,Instances-1);
+                                                        true -> distance_acc(Graph,T,AccDist+length(CurrDist)-1,Instances)
+                                                    end.
+
+
