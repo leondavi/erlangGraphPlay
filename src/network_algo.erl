@@ -10,22 +10,22 @@
 -author("david").
 
 -define(AVERAGE_SAMPLES,1000).
--define(PERCENTAGE_EDGES_ADD,15).
+-define(PERCENTAGE_EDGES_ADD,20).
 -define(PERCENTAGE_VERTICES_REMOVE,10).
 
 
 
 %% API
--export([test/1,generate_cubiq_mesh/1,list_of_edges_representation/1,generate_csv/1,generate_random_3D_indexes/2]).
+-export([test/2,generate_cubiq_mesh/1,list_of_edges_representation/1,generate_csv/1,generate_random_3D_indexes/2]).
 -export([remove_vertices_by_percentage/3,generate_random_pairs/3,add_random_edges_by_percentage/3,calculate_average_shortest_path/3]).
 
-test(MeshSize)-> G = generate_cubiq_mesh(MeshSize),
+test(MeshSize,EdgesToAddPerc)-> G = generate_cubiq_mesh(MeshSize),
   io:format("Graph # of Vertices: ~p\n",[length(digraph:vertices(G))]),
   io:format("Graph # of Edges: ~p\n",[trunc(length(digraph:edges(G))/2)]),
   io:format("Graph Avg Distances Over 1000 Pairs: ~p\n",[calculate_average_shortest_path(G,MeshSize,?AVERAGE_SAMPLES)]),
   io:format("\nResults after adding 10% of the edges\n"),
-  add_random_edges_by_percentage(G,MeshSize,?PERCENTAGE_EDGES_ADD),
-  io:format("Graph # of Edges: ~p\n",[length(digraph:edges(G))]),
+  add_random_edges_by_percentage(G,MeshSize,EdgesToAddPerc),
+  io:format("Graph # of Edges: ~p\n",[trunc(length(digraph:edges(G))/2)]),
   io:format("Graph Avg Distances Over 1000 Pairs: ~p\n",[calculate_average_shortest_path(G,MeshSize,?AVERAGE_SAMPLES)]),
   remove_vertices_by_percentage(G,MeshSize,?PERCENTAGE_VERTICES_REMOVE),
   io:format("\nResults after removing 10% of the vertices\n"),
