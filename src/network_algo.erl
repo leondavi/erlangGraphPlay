@@ -12,9 +12,10 @@
 
 
 %% API
--export([test/0,generate_cubiq_mesh/1,list_of_edges_representation/1]).
+-export([test/0,generate_cubiq_mesh/1,list_of_edges_representation/1,generate_csv/1,generate_random_3D_indexes/2]).
+-export([remove_vertices_by_percentage/3,generate_random_pairs/3,add_random_edges_by_percentage/3]).
 
-test()->G = generate_cubiq_mesh(10),list_of_edges_representation(G).
+test()->G = generate_cubiq_mesh(10),generate_random_pairs(G,10,10),list_of_edges_representation(G).
 
 generate_cubiq_mesh(N)-> Graph = digraph:new(),NewGraph = generate_vertices(Graph,N),connect_mesh_edges(Graph,N,digraph:vertices(NewGraph)).
 
@@ -48,5 +49,40 @@ list_of_edges_representation(Graph)->EdgesList = digraph:edges(Graph),iterate_ov
 iterate_over_edges(_,[],EdgesStringList)->EdgesStringList;
 iterate_over_edges(Graph,EdgesList,EdgesStringList)-> StartVertex = element(2,digraph:edge(Graph,hd(EdgesList))),
                                                       EndVertex = element(3,digraph:edge(Graph,hd(EdgesList))),
-                                                      NewEdgesStringList = EdgesStringList++lists:flatten(io_lib:format("(~p) -> (~p),", [StartVertex,EndVertex])),
+                                                      NewEdgesStringList = EdgesStringList++[io_lib:format("(~p) -> (~p),", [StartVertex,EndVertex])],
                                                       iterate_over_edges(Graph,tl(EdgesList),NewEdgesStringList).
+
+generate_csv(Graph)->EdgesRep = list_of_edges_representation(Graph),FileName = "graph.csv",file:delete(FileName),generate_csv_write_to_file(FileName,EdgesRep).
+generate_csv_write_to_file(FileName,[])->file:close(FileName),ended;
+generate_csv_write_to_file(FileName,ListOfLines)-> [H | T] = ListOfLines,
+                                                    file:write_file(FileName,io_lib:fwrite("~s\n",[lists:flatten([H])]),[append]),
+                                                    generate_csv_write_to_file(FileName,T).
+
+generate_random_3D_indexes(MaxN,Instances)-> generate_random_3D_indexes_rec(MaxN,[],Instances).
+generate_random_3D_indexes_rec(_,List,0) -> List;
+generate_random_3D_indexes_rec(MaxN,List,Instances) -> generate_random_3D_indexes_rec(MaxN,List++[{rand:uniform(MaxN),rand:uniform(MaxN),rand:uniform(MaxN)}],Instances-1).
+
+remove_vertices_by_percentage(Graph,MaxN,Percentage)-> NumToRemove = trunc(length(digraph:vertices(Graph))*(Percentage/100)),io:format("~p\n",[NumToRemove]),
+                                                      digraph:del_vertices(Graph,generate_random_3D_indexes(MaxN,NumToRemove)).
+
+generate_random_pairs(Graph,MaxN,NumOfPairs)-> removeNeighborsOrSelf(Graph,list_to_listofpairs(generate_random_3D_indexes(MaxN,trunc(NumOfPairs*2)),[]),[]).
+
+list_to_listofpairs([],ListOfPairs) -> ListOfPairs;
+list_to_listofpairs(List,ListOfPairs) -> [H | T] = List, [H2 | T2] = T, list_to_listofpairs(T2,ListOfPairs++[{H,H2}]).
+
+removeNeighborsOrSelf(_,[],NewList) -> NewList;
+removeNeighborsOrSelf(Graph,ListOfPairs,NewList)-> [H | T] = ListOfPairs , IsNeighbor = lists:member(element(1,H),digraph:in_neighbours(Graph,element(2,H))),
+                                                 if
+                                                   element(1,H)  == element(2,H) -> removeNeighborsOrSelf(Graph,T,NewList);
+                                                   IsNeighbor ->  removeNeighborsOrSelf(Graph,T,NewList);
+                                                   true -> removeNeighborsOrSelf(Graph,T,NewList++[H])
+                                                 end.
+
+add_random_edges_by_percentage(Graph,Maxn,Perc) -> NumOfEdgesToAdd = round(length(digraph:vertices(Graph))*(Perc/100)),
+                                                  add_edges_given_vertices_pairslist(Graph,generate_random_pairs(Graph,Maxn,NumOfEdgesToAdd)).
+
+add_edges_given_vertices_pairslist(_,[])->done;
+add_edges_given_vertices_pairslist(Graph,VerticesPairsList) -> [H | T] = VerticesPairsList,
+                                                              digraph:add_edge(Graph,element(1,H),element(2,H)), %V1->V2
+                                                              digraph:add_edge(Graph,element(2,H),element(1,H)), %V2->V1
+                                                              add_edges_given_vertices_pairslist(Graph,T).
