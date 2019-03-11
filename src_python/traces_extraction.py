@@ -13,9 +13,9 @@ DEF_COL_DST = 2
 
 class trace:
 
-    def __init__(self,traceFileName,experimentName):
+    def __init__(self,experimentName,traceFileName):
         self.trace = ps.read_csv(traceFileName)
-        self.experimentName=experimentName
+        self.experimentName = experimentName
 
     def extract_statistics(self):
         statistics = dict()
@@ -33,7 +33,7 @@ class trace:
         statistics["# of unique addresses"] = len(UniqueAddresses)
 
         listOfPairs = self.two_columns_to_list_of_pairs(SourcesColumn,DestinationsColumn)
-        statistics["# of unique requests"] = ps.unique(listOfPairs)
+        statistics["# of unique requests"] = len(ps.unique(listOfPairs))
 
         self.generate_activity_histogram(UnifiedTxRxNodes,'CDF Nodes Activity')
         self.generate_activity_histogram(listOfPairs,'CDF Pairs (Edges) Activity')
