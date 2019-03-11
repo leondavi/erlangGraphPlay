@@ -6,9 +6,9 @@ def f(traceInst):
     traceInst.print_to_file()
 
 Experiments = dict()
-Experiments["A"] = "data/small_check.csv"
-Experiments["B"] = "data/small_check.csv"
-Experiments["C"] = "data/small_check.csv"
+Experiments["traceA"] = "data/Trace_In_cluster_A_segment_9_{Time,Src,Dst}_.csv"
+Experiments["traceB"] = "data/Trace_In_cluster_B_segment_9_{Time,Src,Dst}_.csv"
+Experiments["traceC"] = "data/Trace_In_cluster_C_segment_9_{Time,Src,Dst}_.csv"
 
 ExperimentsList = []
 for ExpName, FileName in Experiments.items():
