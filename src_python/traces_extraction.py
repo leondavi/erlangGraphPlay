@@ -25,16 +25,14 @@ class trace:
         SourcesColumn = self.trace.iloc[:,DEF_COL_SRC]
         DestinationsColumn = self.trace.iloc[:,DEF_COL_DST]
 
+        print(self.expStrBlock+"Converting strings to integer representation")
+        UniqueAddresses,UniqueAddressesInt,SourcesColumn,DestinationsColumn,UnifiedTxRxNodes = self.convert_string_column_to_indexes(SourcesColumn,DestinationsColumn)
+
         print(self.expStrBlock+"Calculating unique src/dst")
 
         statistics["# of unique sources"] = len(ps.unique(SourcesColumn))
         statistics["# of unique destinations"] = len(ps.unique(DestinationsColumn))
-
-        UnifiedTxRxNodes = ps.concat([SourcesColumn,DestinationsColumn])
-
-        UniqueAddresses = ps.unique(UnifiedTxRxNodes)
-
-        statistics["# of unique addresses"] = len(UniqueAddresses)
+        statistics["# of unique addresses"] = len(UniqueAddressesInt)
 
         listOfPairs = self.two_columns_to_list_of_pairs(SourcesColumn,DestinationsColumn)
         print(self.expStrBlock+"Calculating unique requests")
@@ -43,13 +41,29 @@ class trace:
 
         self.generateHistograms(UnifiedTxRxNodes,listOfPairs)
 
-        self.JointlyDistMat_Calc(UniqueAddresses,SourcesColumn,DestinationsColumn)
+        self.JointlyDistMat_Calc(UniqueAddressesInt,SourcesColumn,DestinationsColumn)
 
         self.statistics = statistics #save the dictionary
 
         print(self.expStrBlock+"Analayze completed")
 
 
+    def convert_string_column_to_indexes(self,SourcesColumnStr,DestinationsColumnStr):
+        UnifiedList = ps.concat([SourcesColumnStr, DestinationsColumnStr])
+        UniqueAddresses = ps.unique(UnifiedList)
+        UniqueAddressesInt = range(UniqueAddresses.shape[0])
+
+        SourcesIntCol = np.zeros(shape=SourcesColumnStr.shape)
+        DestinationsIntCol =  np.zeros(shape=DestinationsColumnStr.shape)
+
+        for idx in range(SourcesColumnStr.shape[0]):
+            SourcesIntCol[idx] = np.where(UniqueAddresses==SourcesColumnStr[idx])[0][0]
+            DestinationsIntCol[idx] = np.where(UniqueAddresses==DestinationsColumnStr[idx])[0][0]
+
+
+        UnifiedListInt = np.concatenate((SourcesIntCol,DestinationsIntCol))
+
+        return UniqueAddresses,UniqueAddressesInt,SourcesIntCol,DestinationsIntCol,UnifiedListInt
 
     def generateHistograms(self,UnifiedTxRxNodes,listOfPairs):
         print(self.expStrBlock+"Generating nodes activity histogram")
