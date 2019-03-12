@@ -17,12 +17,15 @@ class trace:
     def __init__(self,experimentName,traceFileName):
         self.trace = ps.read_csv(traceFileName)
         self.experimentName = experimentName
+        self.expStrBlock = "["+self.experimentName+"] "
 
     def extract_statistics(self):
         statistics = dict()
         TimeColumn = self.trace.iloc[:,DEF_COL_TIME]
         SourcesColumn = self.trace.iloc[:,DEF_COL_SRC]
         DestinationsColumn = self.trace.iloc[:,DEF_COL_DST]
+
+        print(self.expStrBlock+"Calculating unique src/dst")
 
         statistics["# of unique sources"] = len(ps.unique(SourcesColumn))
         statistics["# of unique destinations"] = len(ps.unique(DestinationsColumn))
@@ -34,6 +37,8 @@ class trace:
         statistics["# of unique addresses"] = len(UniqueAddresses)
 
         listOfPairs = self.two_columns_to_list_of_pairs(SourcesColumn,DestinationsColumn)
+        print(self.expStrBlock+"Calculating unique requests")
+
         statistics["# of unique requests"] = len(ps.unique(listOfPairs))
 
         self.generateHistograms(UnifiedTxRxNodes,listOfPairs)
@@ -42,12 +47,18 @@ class trace:
 
         self.statistics = statistics #save the dictionary
 
+        print(self.expStrBlock+"Analayze completed")
+
+
 
     def generateHistograms(self,UnifiedTxRxNodes,listOfPairs):
+        print(self.expStrBlock+"Generating nodes activity histogram")
         self.generate_activity_histogram(UnifiedTxRxNodes, 'Nodes Activity')
+        print(self.expStrBlock+"Generating edges activity histogram")
         self.generate_activity_histogram(listOfPairs, 'Pairs (Edges) Activity')
 
     def JointlyDistMat_Calc(self,UniqueAddresses,SourcesColumn,DestinationsColumn):
+        print(self.expStrBlock+"Generating Jointly Distribution Matrix")
         self.JointlyDistMat = np.zeros((len(UniqueAddresses), len(UniqueAddresses)), dtype=float)
 
         for idx, node in enumerate(UniqueAddresses):
@@ -85,6 +96,7 @@ class trace:
 
 
     def print_to_file(self):
+        print(self.expStrBlock+"Saving results to files")
         plot.figure()
         plot.imshow(self.JointlyDistMat,cmap='hot')
         plot.savefig(self.experimentName+"_JointlyDistMatrix_HeatMap.png")
