@@ -18,12 +18,18 @@ print("Loading traces")
 
 ExperimentsList = []
 for ExpName, FileName in Experiments.items():
-    ExperimentsList.append(trace(ExpName,FileName))
+    #ExperimentsList.append(trace(ExpName,FileName))
+    print("Experiment: "+ExpName)
+    print("---------------------\n")
+    CurrentTraceInst = trace(ExpName, FileName)
+    CurrentTraceInst.extract_statistics()
+    CurrentTraceInst.print_to_file()
+    print("ended\n\n")
 print("Load completed")
 
 #parallel loop
-print("Initiating experiments (parallel run)")
-with Pool(len(ExperimentsList)) as p:
-    p.map(f,ExperimentsList)
+# print("Initiating experiments (parallel run)")
+# with Pool(len(ExperimentsList)) as p:
+#     p.map(f,ExperimentsList)
 
 
