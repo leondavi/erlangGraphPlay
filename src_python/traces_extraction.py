@@ -50,15 +50,23 @@ class trace:
 
     def convert_string_column_to_indexes(self,SourcesColumnStr,DestinationsColumnStr):
         UnifiedList = ps.concat([SourcesColumnStr, DestinationsColumnStr])
+        print(self.expStrBlock + "Generating array of uniques")
         UniqueAddresses = ps.unique(UnifiedList)
-        UniqueAddressesInt = range(UniqueAddresses.shape[0])
+        UniqueAddressesInt = []
 
+        print(self.expStrBlock + "Generating hash table")
+        convert_hash = dict()
+        for idx,address in enumerate(UniqueAddresses):
+            convert_hash[address] = idx
+            UniqueAddressesInt.append(idx)
+
+        print(self.expStrBlock + "Generating new columns")
         SourcesIntCol = np.zeros(shape=SourcesColumnStr.shape)
         DestinationsIntCol =  np.zeros(shape=DestinationsColumnStr.shape)
 
         for idx in range(SourcesColumnStr.shape[0]):
-            SourcesIntCol[idx] = np.where(UniqueAddresses==SourcesColumnStr[idx])[0][0]
-            DestinationsIntCol[idx] = np.where(UniqueAddresses==DestinationsColumnStr[idx])[0][0]
+            SourcesIntCol[idx] = convert_hash[SourcesColumnStr[idx]]
+            DestinationsIntCol[idx] = convert_hash[DestinationsColumnStr[idx]]
 
 
         UnifiedListInt = np.concatenate((SourcesIntCol,DestinationsIntCol))
