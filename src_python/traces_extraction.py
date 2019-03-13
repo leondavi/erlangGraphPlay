@@ -87,13 +87,18 @@ class trace:
     def JointlyDistMat_Calc(self,UniqueAddresses,listOfPairs):
         print(self.expStrBlock+"Generating Jointly Distribution Matrix")
         self.JointlyDistMat = csr_matrix((len(UniqueAddresses), len(UniqueAddresses)),dtype=float)
+        row = []
+        col = []
+        data = []
+        labels, values = zip(*Counter(listOfPairs).items())
 
-        for pair in listOfPairs:
-            row = np.array([pair[0]])
-            col = np.array([pair[1]])
-            data = np.array([1])
-            tmpMat = csr_matrix((data,(row,col)),shape=(len(UniqueAddresses), len(UniqueAddresses)),dtype=float)
-            self.JointlyDistMat = self.JointlyDistMat+tmpMat
+        for idx,pair in enumerate(labels):
+            row.append(pair[0])
+            col.append(pair[1])
+            data.append(values[idx])
+
+        self.JointlyDistMat = csr_matrix((data,col,row),dtype=int)
+
 
     def two_columns_to_list_of_pairs(self,ColA,ColB):
         Res = []
@@ -103,19 +108,20 @@ class trace:
 
     def generate_activity_histogram(self,givenList,PlotName):
         #plot.hist(x=,bins='auto',color='#0504aa',alpha=0.7,rwidth=0.85)
-        labels,values = zip(*Counter(givenList[0:10000]).items())
+        labels,values = zip(*Counter(givenList).items())
         indexes = range(0,len(labels))
         valuesDist = [x/sum(values) for x in values]
-        plot.figure()
-        plot.ylabel('Probability')
-        plot.title(PlotName+" Distribution")
-        plot.bar(indexes, valuesDist, alpha=0.75, color="skyblue")
-        fname = self.experimentName+"_bar_"+PlotName+".png"
-        plot.savefig(fname)
+        # plot.figure()
+        # plot.ylabel('Probability')
+        # plot.title(PlotName+" Distribution")
+        # plot.bar(indexes, valuesDist, alpha=0.75, color="skyblue")
+        # fname = self.experimentName+"_bar_"+PlotName+".png"
+        # plot.savefig(fname)
         plot.figure()
         plot.ylabel('Occurances')
         plot.title(PlotName+" Number Of Transmits")
-        plot.hist(x=values, bins='auto', alpha=0.75, color="skyblue")
+        plot.hist(x=values, bins='auto', alpha=0.75, color="skyblue",histtype='step')
+        plot.yscale("log")
         fname = self.experimentName + "_hist_" + PlotName + ".png"
         plot.savefig(fname)
 
