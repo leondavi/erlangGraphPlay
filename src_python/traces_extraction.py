@@ -38,11 +38,12 @@ class trace:
         statistics["# of unique addresses"] = len(UniqueAddressesInt)
 
         listOfPairs = self.two_columns_to_list_of_pairs(SourcesColumn,DestinationsColumn)
+        print("# num of pairs "+str(len(listOfPairs)))
         print(self.expStrBlock+"Calculating unique requests")
 
         statistics["# of unique requests"] = len(ps.unique(listOfPairs))
 
-        self.JointlyDistMat_Calc(UniqueAddressesInt,SourcesColumn,DestinationsColumn)
+        self.JointlyDistMat_Calc(UniqueAddressesInt,listOfPairs)
 
         self.generateHistograms(UnifiedTxRxNodes,listOfPairs)
 
@@ -82,23 +83,17 @@ class trace:
         print(self.expStrBlock+"Generating edges activity histogram")
         self.generate_activity_histogram(listOfPairs, 'Pairs (Edges) Activity')
 
-    def JointlyDistMat_Calc(self,UniqueAddresses,SourcesColumn,DestinationsColumn):
+
+    def JointlyDistMat_Calc(self,UniqueAddresses,listOfPairs):
         print(self.expStrBlock+"Generating Jointly Distribution Matrix")
         self.JointlyDistMat = csr_matrix((len(UniqueAddresses), len(UniqueAddresses)),dtype=float)
 
-        for idx, node in enumerate(UniqueAddresses):
-            appearancesList = np.where(SourcesColumn == node)[0]
-            NomOfOutNodes = len(appearancesList)
-            CurrentNodeProbability = len(appearancesList) / len(SourcesColumn)
-            if NomOfOutNodes > 0:
-                partVal = (1 / NomOfOutNodes) * CurrentNodeProbability
-                for destNodeIdx in appearancesList:
-                    #self.JointlyDistMat[idx][int(DestinationsColumn[destNodeIdx])] += partVal
-                    row = np.array([idx])
-                    col = np.array([int(DestinationsColumn[destNodeIdx])])
-                    data = np.array([partVal])
-                    tmpMat = csr_matrix((data,(row,col)),shape=(len(UniqueAddresses), len(UniqueAddresses)),dtype=float)
-                    self.JointlyDistMat = self.JointlyDistMat+tmpMat
+        for pair in listOfPairs:
+            row = np.array([pair[0]])
+            col = np.array([pair[1]])
+            data = np.array([1])
+            tmpMat = csr_matrix((data,(row,col)),shape=(len(UniqueAddresses), len(UniqueAddresses)),dtype=float)
+            self.JointlyDistMat = self.JointlyDistMat+tmpMat
 
     def two_columns_to_list_of_pairs(self,ColA,ColB):
         Res = []
