@@ -6,6 +6,8 @@ from collections import Counter
 import numpy as np
 import csv
 from threading import Thread
+import matplotlib.cm as cm
+from scipy.sparse import csr_matrix
 
 DEF_COL_TIME = 0
 DEF_COL_SRC = 1
@@ -26,8 +28,9 @@ class trace:
         DestinationsColumn = self.trace.iloc[:,DEF_COL_DST]
 
         print(self.expStrBlock+"Converting strings to integer representation")
-        UniqueAddresses,UniqueAddressesInt,SourcesColumn,DestinationsColumn,UnifiedTxRxNodes = self.convert_string_column_to_indexes(SourcesColumn,DestinationsColumn)
+        UniqueAddressesInt,SourcesColumn,DestinationsColumn,UnifiedTxRxNodes = self.convert_string_column_to_indexes(SourcesColumn,DestinationsColumn)
 
+        print("# of unique addresses: "+str(len(UniqueAddressesInt)))
         print(self.expStrBlock+"Calculating unique src/dst")
 
         statistics["# of unique sources"] = len(ps.unique(SourcesColumn))
@@ -39,9 +42,9 @@ class trace:
 
         statistics["# of unique requests"] = len(ps.unique(listOfPairs))
 
-        self.generateHistograms(UnifiedTxRxNodes,listOfPairs)
-
         self.JointlyDistMat_Calc(UniqueAddressesInt,SourcesColumn,DestinationsColumn)
+
+        self.generateHistograms(UnifiedTxRxNodes,listOfPairs)
 
         self.statistics = statistics #save the dictionary
 
@@ -71,7 +74,7 @@ class trace:
 
         UnifiedListInt = np.concatenate((SourcesIntCol,DestinationsIntCol))
 
-        return UniqueAddresses,UniqueAddressesInt,SourcesIntCol,DestinationsIntCol,UnifiedListInt
+        return UniqueAddressesInt,SourcesIntCol,DestinationsIntCol,UnifiedListInt
 
     def generateHistograms(self,UnifiedTxRxNodes,listOfPairs):
         print(self.expStrBlock+"Generating nodes activity histogram")
@@ -81,7 +84,7 @@ class trace:
 
     def JointlyDistMat_Calc(self,UniqueAddresses,SourcesColumn,DestinationsColumn):
         print(self.expStrBlock+"Generating Jointly Distribution Matrix")
-        self.JointlyDistMat = np.zeros((len(UniqueAddresses), len(UniqueAddresses)), dtype=float)
+        self.JointlyDistMat = csr_matrix((len(UniqueAddresses), len(UniqueAddresses)),dtype=float)
 
         for idx, node in enumerate(UniqueAddresses):
             appearancesList = np.where(SourcesColumn == node)[0]
@@ -89,8 +92,13 @@ class trace:
             CurrentNodeProbability = len(appearancesList) / len(SourcesColumn)
             if NomOfOutNodes > 0:
                 partVal = (1 / NomOfOutNodes) * CurrentNodeProbability
-                for idx in appearancesList:
-                    self.JointlyDistMat[idx][np.where(UniqueAddresses == DestinationsColumn[idx])[0][0]] += partVal
+                for destNodeIdx in appearancesList:
+                    #self.JointlyDistMat[idx][int(DestinationsColumn[destNodeIdx])] += partVal
+                    row = np.array([idx])
+                    col = np.array([int(DestinationsColumn[destNodeIdx])])
+                    data = np.array([partVal])
+                    tmpMat = csr_matrix((data,(row,col)),shape=(len(UniqueAddresses), len(UniqueAddresses)),dtype=float)
+                    self.JointlyDistMat = self.JointlyDistMat+tmpMat
 
     def two_columns_to_list_of_pairs(self,ColA,ColB):
         Res = []
@@ -100,7 +108,7 @@ class trace:
 
     def generate_activity_histogram(self,givenList,PlotName):
         #plot.hist(x=,bins='auto',color='#0504aa',alpha=0.7,rwidth=0.85)
-        labels,values = zip(*Counter(givenList).items())
+        labels,values = zip(*Counter(givenList[0:10000]).items())
         indexes = range(0,len(labels))
         valuesDist = [x/sum(values) for x in values]
         plot.figure()
@@ -120,12 +128,19 @@ class trace:
     def print_to_file(self):
         print(self.expStrBlock+"Saving results to files")
         plot.figure()
-        plot.imshow(self.JointlyDistMat,cmap='hot')
-        plot.savefig(self.experimentName+"_JointlyDistMatrix_HeatMap.png")
-        np.savetxt(self.experimentName+"_JointlyDistMatrix.csv",self.JointlyDistMat,delimiter=",")
+        #plot.imshow(self.JointlyDistMat,interpolation='bilinear')
+        #plot.savefig(self.experimentName+"_JointlyDistMatrix_HeatMap.png")
+        #np.savetxt(self.experimentName+"_JointlyDistMatrix.csv",self.JointlyDistMat,delimiter=",")
+        self.save_sparseMatcsv(self.experimentName+"_JointlyDistMatrix.csv",self.JointlyDistMat)
         #saving the statitstics
         with open(self.experimentName+'_statistics.csv', 'w') as f:
             for key in self.statistics.keys():
                 f.write("%s,%s\n" % (key, self.statistics[key]))
 
-
+    def save_sparseMatcsv(self,filename,SparseMat):
+        with open(filename, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['x', 'y', 'value'])
+            MatCoo = SparseMat.tocoo()
+            for idx,data in enumerate(MatCoo.data):
+                writer.writerow([MatCoo.row[idx],MatCoo.col[idx],data])
