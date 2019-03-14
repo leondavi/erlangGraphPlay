@@ -86,11 +86,11 @@ class trace:
 
     def JointlyDistMat_Calc(self,UniqueAddresses,listOfPairs):
         print(self.expStrBlock+"Generating Jointly Distribution Matrix")
-        self.JointlyDistMat = csr_matrix((len(UniqueAddresses), len(UniqueAddresses)),dtype=float)
         row = []
         col = []
         data = []
-        labels, values = zip(*Counter(listOfPairs).items())
+        #labels, values = zip(*Counter(listOfPairs).items())
+        labels, values = self.times_appeared_in_list(listOfPairs)
 
         for idx,pair in enumerate(labels):
             row.append(pair[0])
@@ -108,9 +108,10 @@ class trace:
 
     def generate_activity_histogram(self,givenList,PlotName):
         #plot.hist(x=,bins='auto',color='#0504aa',alpha=0.7,rwidth=0.85)
-        labels,values = zip(*Counter(givenList).items())
-        indexes = range(0,len(labels))
-        valuesDist = [x/sum(values) for x in values]
+        #labels,values = zip(*Counter(givenList).items())
+        labels, values = self.times_appeared_in_list(givenList)
+        #indexes = range(0,len(labels))
+        #valuesDist = [x/sum(values) for x in values]
         # plot.figure()
         # plot.ylabel('Probability')
         # plot.title(PlotName+" Distribution")
@@ -120,11 +121,19 @@ class trace:
         plot.figure()
         plot.ylabel('Occurances')
         plot.title(PlotName+" Number Of Transmits")
-        plot.hist(x=values, bins='auto', alpha=0.75, color="skyblue",histtype='step')
+        plot.hist(x=values, bins='auto', alpha=0.75, color="skyblue")
         plot.yscale("log")
         fname = self.experimentName + "_hist_" + PlotName + ".png"
         plot.savefig(fname)
 
+    def times_appeared_in_list(self,givenList):
+        counts_dict = dict()
+        for elem in givenList:
+            if elem in counts_dict:
+                counts_dict[elem] += 1
+            else:
+                counts_dict[elem] = 1
+        return list(counts_dict.keys()), list(counts_dict.values())
 
     def print_to_file(self):
         print(self.expStrBlock+"Saving results to files")
