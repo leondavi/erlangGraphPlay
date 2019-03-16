@@ -141,11 +141,12 @@ class trace:
         #plot.imshow(self.JointlyDistMat,interpolation='bilinear')
         #plot.savefig(self.experimentName+"_JointlyDistMatrix_HeatMap.png")
         #np.savetxt(self.experimentName+"_JointlyDistMatrix.csv",self.JointlyDistMat,delimiter=",")
-        self.save_sparseMatcsv(self.experimentName+"_JointlyDistMatrix.csv",self.JointlyDistMat)
         #saving the statitstics
         with open(self.experimentName+'_statistics.csv', 'w') as f:
             for key in self.statistics.keys():
                 f.write("%s,%s\n" % (key, self.statistics[key]))
+        self.save_sparseMatcsv(self.experimentName+"_JointlyDistMatrix.csv",self.JointlyDistMat)
+        print(self.expStrBlock+"File were saved")
 
     def save_sparseMatcsv(self,filename,SparseMat):
         # with open(filename, 'w', newline='') as f:
@@ -154,6 +155,8 @@ class trace:
         #     MatCoo = SparseMat.tocoo()
         #     for idx,data in enumerate(MatCoo.data):
         #         writer.writerow([MatCoo.row[idx],MatCoo.col[idx],data])
+        print(self.expStrBlock+"Saving sparse matrix")
         MatCoo = SparseMat.tocoo()
         ColStack = np.column_stack((MatCoo.row,MatCoo.col,MatCoo.data))
         np.savetxt(filename,ColStack,delimiter=",")
+        print(self.expStrBlock+"Sparse matrix was saved successfuly")
