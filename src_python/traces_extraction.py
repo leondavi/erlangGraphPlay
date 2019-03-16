@@ -137,7 +137,7 @@ class trace:
 
     def print_to_file(self):
         print(self.expStrBlock+"Saving results to files")
-        plot.figure()
+        #plot.figure()
         #plot.imshow(self.JointlyDistMat,interpolation='bilinear')
         #plot.savefig(self.experimentName+"_JointlyDistMatrix_HeatMap.png")
         #np.savetxt(self.experimentName+"_JointlyDistMatrix.csv",self.JointlyDistMat,delimiter=",")
@@ -148,9 +148,12 @@ class trace:
                 f.write("%s,%s\n" % (key, self.statistics[key]))
 
     def save_sparseMatcsv(self,filename,SparseMat):
-        with open(filename, 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(['x', 'y', 'value'])
-            MatCoo = SparseMat.tocoo()
-            for idx,data in enumerate(MatCoo.data):
-                writer.writerow([MatCoo.row[idx],MatCoo.col[idx],data])
+        # with open(filename, 'w', newline='') as f:
+        #     writer = csv.writer(f)
+        #     writer.writerow(['x', 'y', 'value'])
+        #     MatCoo = SparseMat.tocoo()
+        #     for idx,data in enumerate(MatCoo.data):
+        #         writer.writerow([MatCoo.row[idx],MatCoo.col[idx],data])
+        MatCoo = SparseMat.tocoo()
+        ColStack = np.column_stack((MatCoo.row,MatCoo.col,MatCoo.data))
+        np.savetxt(filename,ColStack,delimiter=",")

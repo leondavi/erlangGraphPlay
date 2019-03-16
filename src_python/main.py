@@ -1,6 +1,7 @@
 from traces_extraction import *
 from multiprocessing import Pool
 
+
 def f(traceInst):
     traceInst.extract_statistics()
     traceInst.print_to_file()
