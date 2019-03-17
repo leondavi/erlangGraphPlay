@@ -158,5 +158,7 @@ class trace:
         print(self.expStrBlock+"Saving sparse matrix")
         MatCoo = SparseMat.tocoo()
         ColStack = np.column_stack((MatCoo.row,MatCoo.col,MatCoo.data))
-        np.savetxt(filename,ColStack,delimiter=",")
+        dframe = ps.DataFrame(ColStack,columns=['row','col','val'],index=range(len(ColStack)))
+        dframe.to_csv(filename)
+        #np.savetxt(filename,ColStack,delimiter=",")
         print(self.expStrBlock+"Sparse matrix was saved successfuly")
