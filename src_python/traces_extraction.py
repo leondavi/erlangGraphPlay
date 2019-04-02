@@ -13,6 +13,8 @@ DEF_COL_TIME = 0
 DEF_COL_SRC = 1
 DEF_COL_DST = 2
 
+NODES_ACTIVITY_ATTR = "nodes activity"
+PAIRS_ACTIVITY_ATTR = "pairs activity"
 
 class trace:
 
@@ -20,6 +22,7 @@ class trace:
         self.trace = ps.read_csv(traceFileName)
         self.experimentName = experimentName
         self.expStrBlock = "["+self.experimentName+"] "
+        self.convert_hash = dict()
 
     def extract_statistics(self):
         statistics = dict()
@@ -28,7 +31,7 @@ class trace:
         DestinationsColumn = self.trace.iloc[:,DEF_COL_DST]
 
         print(self.expStrBlock+"Converting strings to integer representation")
-        UniqueAddressesInt,SourcesColumn,DestinationsColumn,UnifiedTxRxNodes = self.convert_string_column_to_indexes(SourcesColumn,DestinationsColumn)
+        UniqueAddressesInt,SourcesColumn,DestinationsColumn,UnifiedTxRxNodes,self.convert_hash = self.convert_string_column_to_indexes(SourcesColumn,DestinationsColumn)
 
         print("# of unique addresses: "+str(len(UniqueAddressesInt)))
         print(self.expStrBlock+"Calculating unique src/dst")
@@ -43,14 +46,20 @@ class trace:
 
         statistics["# of unique requests"] = len(ps.unique(listOfPairs))
 
+        statistics[NODES_ACTIVITY_ATTR],statistics[PAIRS_ACTIVITY_ATTR] = self.generateHistograms(UnifiedTxRxNodes,listOfPairs)
+
         self.JointlyDistMat_Calc(UniqueAddressesInt,listOfPairs)
 
-        self.generateHistograms(UnifiedTxRxNodes,listOfPairs)
 
         self.statistics = statistics #save the dictionary
 
         print(self.expStrBlock+"Analayze completed")
 
+    def get_convert_hash(self):
+        return self.convert_hash
+
+    def get_trace_data(self):
+        return self.statistics
 
     def convert_string_column_to_indexes(self,SourcesColumnStr,DestinationsColumnStr):
         UnifiedList = ps.concat([SourcesColumnStr, DestinationsColumnStr])
@@ -75,13 +84,14 @@ class trace:
 
         UnifiedListInt = np.concatenate((SourcesIntCol,DestinationsIntCol))
 
-        return UniqueAddressesInt,SourcesIntCol,DestinationsIntCol,UnifiedListInt
+        return UniqueAddressesInt,SourcesIntCol,DestinationsIntCol,UnifiedListInt,convert_hash
 
     def generateHistograms(self,UnifiedTxRxNodes,listOfPairs):
         print(self.expStrBlock+"Generating nodes activity histogram")
-        self.generate_activity_histogram(UnifiedTxRxNodes, 'Nodes Activity')
+        nodesActivity = self.generate_activity_histogram(UnifiedTxRxNodes, 'Nodes Activity')
         print(self.expStrBlock+"Generating edges activity histogram")
-        self.generate_activity_histogram(listOfPairs, 'Pairs (Edges) Activity')
+        pairsActivity = self.generate_activity_histogram(listOfPairs, 'Pairs (Edges) Activity')
+        return nodesActivity,pairsActivity
 
 
     def JointlyDistMat_Calc(self,UniqueAddresses,listOfPairs):
@@ -125,6 +135,7 @@ class trace:
         plot.yscale("log")
         fname = self.experimentName + "_hist_" + PlotName + ".png"
         plot.savefig(fname)
+        return (labels,values)
 
     def times_appeared_in_list(self,givenList):
         counts_dict = dict()
