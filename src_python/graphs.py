@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 import math
 
 class NetGraph:
+    TRACE_TIME = 0
+    TRACE_SRC = 1
+    TRACE_DST = 2
+
     def __init__(self,NumOfNodes,BranchingFactor):
         self.treeHeight = self.calculate_tree_height(NumOfNodes,BranchingFactor)
         self.tree = self.remove_redundant_leaves(nx.balanced_tree(BranchingFactor,self.treeHeight),NumOfNodes)
@@ -28,22 +32,25 @@ class NetGraph:
                 leavesList.append(tpl[0])
         return leavesList
 
-    def simulate(self,trace,nodes_hash):
+    def simulate_simple_binary(self,trace,nodes_hash,samples=100):
+        sum_of_hopes = 0
+        trace_subsampled = trace.sample(n=samples)
+        for index,row in trace_subsampled.iterrows():
+            source_add = nodes_hash[row.values[self.TRACE_SRC]]
+            destination_add = nodes_hash[row.values[self.TRACE_DST]]
+            sum_of_hopes += nx.shortest_path_length(self.tree,source=source_add,target=destination_add)
+        self.simple_binary_avg = sum_of_hopes/samples
+        return self.simple_binary_avg
+
+   # Taking the nodes with maximal activity to be in lower levels
+   #  def simulate_algo(self,trace,nodes_hash,distribution_mat,samples=100):
+   #
+   #  def hash_by_distribution(self,nodes_hash,distribution):
+   #      address_by_dist = dict()
+   #      for
 
 
 
-
-degree_seq = [4,1,1,1,1]
-#G = nx.degree_sequence_tree(degree_seq)
-G = NetGraph(NumOfNodes=25,BranchingFactor=4).tree
-#G = nx.balanced_tree(4,4)
-
-pos = graphviz_layout(G,prog='dot')
-nx.draw_networkx_nodes(G, pos, cmap=plt.get_cmap('jet'),node_size = 500)
-nx.draw_networkx_labels(G, pos)
-nx.draw_networkx_edges(G, pos, edge_color='r', arrows=True)
-nx.draw_networkx_edges(G, pos, arrows=False)
-plt.show()
 
 
 

@@ -1,5 +1,6 @@
 from traces_extraction import *
 from multiprocessing import Pool
+from graphs import *
 
 
 Experiments = dict()
@@ -22,6 +23,16 @@ for ExpName, FileName in Experiments.items():
     CurrentTraceInst.extract_statistics()
     CurrentTraceInst.print_to_file()
     print("ended\n\n")
+
+    network_graph = NetGraph(CurrentTraceInst.statistics["# of unique addresses"],4)
+    G = network_graph
+    network_graph.simulate_simple_binary(CurrentTraceInst.trace,CurrentTraceInst.convert_hash)
+    pos = graphviz_layout(G, prog='dot')
+    nx.draw_networkx_nodes(G, pos, cmap=plt.get_cmap('jet'), node_size=500)
+    nx.draw_networkx_labels(G, pos)
+    nx.draw_networkx_edges(G, pos, edge_color='r', arrows=True)
+    nx.draw_networkx_edges(G, pos, arrows=False)
+    plt.show()
 print("Load completed")
 
 

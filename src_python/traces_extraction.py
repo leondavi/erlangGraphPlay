@@ -48,6 +48,9 @@ class trace:
 
         statistics[NODES_ACTIVITY_ATTR],statistics[PAIRS_ACTIVITY_ATTR] = self.generateHistograms(UnifiedTxRxNodes,listOfPairs)
 
+        self.nodes_activity_df = ps.DataFrame([statistics[NODES_ACTIVITY_ATTR][0],statistics[NODES_ACTIVITY_ATTR][1]])
+        self.nodes_activity_df = (-1*(self.nodes_activity_df.T)).sort_values(by=[1])*(-1)
+
         self.JointlyDistMat_Calc(UniqueAddressesInt,listOfPairs)
 
 
