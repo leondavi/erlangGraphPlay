@@ -1,14 +1,16 @@
 from traces_extraction import *
 from multiprocessing import Pool
 from graphs import *
+import time
 
 
 Experiments = dict()
-# Experiments["traceC"] = "data/Trace_In_cluster_C_segment_9_{Time,Src,Dst}_.csv"
-# Experiments["traceA"] = "data/Trace_In_cluster_A_segment_9_{Time,Src,Dst}_.csv"
+Experiments["traceA"] = "data/Trace_In_cluster_A_segment_9_{Time,Src,Dst}_.csv"
 # Experiments["traceB"] = "data/Trace_In_cluster_B_segment_9_{Time,Src,Dst}_.csv"
+# Experiments["traceC"] = "data/Trace_In_cluster_C_segment_9_{Time,Src,Dst}_.csv"
+
 #
-Experiments["demo"] = "data/small_check.csv"
+# Experiments["demo"] = "data/small_check.csv"
 # Experiments["traceB"] = "data/small_check.csv"
 # Experiments["traceC"] = "data/small_check.csv"
 
@@ -26,13 +28,26 @@ for ExpName, FileName in Experiments.items():
 
     network_graph = NetGraph(CurrentTraceInst.statistics["# of unique addresses"],4)
     G = network_graph
-    network_graph.simulate_simple_binary(CurrentTraceInst.trace,CurrentTraceInst.convert_hash)
-    pos = graphviz_layout(G, prog='dot')
-    nx.draw_networkx_nodes(G, pos, cmap=plt.get_cmap('jet'), node_size=500)
-    nx.draw_networkx_labels(G, pos)
-    nx.draw_networkx_edges(G, pos, edge_color='r', arrows=True)
-    nx.draw_networkx_edges(G, pos, arrows=False)
-    plt.show()
+    starting_time = time.time()
+    avg = network_graph.simulate_simple_binary(CurrentTraceInst.trace,CurrentTraceInst.convert_hash)
+    print("Simple binary tree, path average: "+str(avg)+" time took: "+str(time.time()-starting_time)+"sec")
+
+    starting_time = time.time()
+    avg = network_graph.simulate_algo_activity_dist(CurrentTraceInst.trace,CurrentTraceInst.convert_hash,CurrentTraceInst.nodes_activity_df)
+    print("Order of tree by activity, path average: "+str(avg)+" time took: "+str(time.time()-starting_time)+"sec")
+
+    starting_time = time.time()
+    avg = network_graph.simulate_algo_activity_dist_add_random_shortcuts(CurrentTraceInst.trace,CurrentTraceInst.convert_hash,CurrentTraceInst.nodes_activity_df,rand_shortctus=1000)
+    print("Order of tree by activity with 1k random shortcuts, path average: "+str(avg)+" time took: "+str(time.time()-starting_time)+"sec")
+
+    starting_time = time.time()
+    avg = network_graph.simulate_algo_activity_dist_add_random_shortcuts(CurrentTraceInst.trace,CurrentTraceInst.convert_hash,CurrentTraceInst.nodes_activity_df,rand_shortctus=10000)
+    print("Order of tree by activity with 10k random shortcuts, path average: "+str(avg)+" time took: "+str(time.time()-starting_time)+"sec")
+
+    starting_time = time.time()
+    avg = network_graph.simulate_algo_activity_dist_add_random_shortcuts(CurrentTraceInst.trace,CurrentTraceInst.convert_hash,CurrentTraceInst.nodes_activity_df,rand_shortctus=100000)
+    print("Order of tree by activity with 100k random shortcuts, path average: "+str(avg)+" time took: "+str(time.time()-starting_time)+"sec")
+
 print("Load completed")
 
 
